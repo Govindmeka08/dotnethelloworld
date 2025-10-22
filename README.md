@@ -56,3 +56,46 @@ This repository contains a simple .NET 9 Web API that returns "Hello World" at t
   - Working app service URL after deployment.
 
 ---
+
+This project demonstrates how to setup a CI/CD pipeline using Azure Devops pipeline to deploy a .NET 9 Web API ('HelloApi')
+
+# Infrastructure as a code using bicep
+#provisioned:
+- Azure App Service Plan (Linux, B1 tier)
+- Azure Web App configured for .Net 9
+
+so the bicep file is located at the root repo provisioning the above resources
+
+## command to deploy
+ ''' bash
+ az deployment group create \
+  --resource-group resource-group-name \
+  --template-file main.bicep
+  --parameters \ 
+    appServicePlanName="helloappserviceplan" \
+    webAppName="hello-dotnet9-webapp"
+
+## deployment pipeline
+since no azure subscription was not there this deployment won't be executed but if it is created we can execute it.
+
+azure-pipelines.yaml is placed at the root which will run on every push to the main branch
+
+we have multiple stages represnting the pipeline flow
+Build stage:
+- INSTALL .NET 9 SDK
+- Restores NuGet dependencies
+- Builds the project in Release mode
+- publishes a zipped artifact (drop/)
+
+Deploy stage:
+- Deploys the build artifact to Azure App Service
+- uses the AzureWebApp@1 task to deploy the .zip 
+
+
+#service connection is (expected)
+azureSubscription: 'AzureSP-Devops'
+this can be created in azure
+under AzureDevops -> Project Settings -> Service Connections -> Azure ResourceManager
+
+#Expected Application URL
+https://hello-dotnet9-webapp.azurewebsites.net
